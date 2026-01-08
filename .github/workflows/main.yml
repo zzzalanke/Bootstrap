@@ -1,0 +1,33 @@
+name: Build Bootstrap
+
+on:
+  workflow_dispatch: # 允许手动点击按钮触发
+  push:
+    branches: [ "main" ] # 每次修改代码也触发
+
+jobs:
+  build:
+    runs-on: macos-latest # 使用 GitHub 的 macOS 服务器
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # 必须拉取子模块，否则编译必报错
+
+      - name: Install Theos (RootHide Version)
+        run: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/roothide/theos/master/bin/install-theos)"
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
+      - name: Build Package
+        run: |
+          export THEOS=$HOME/theos
+          # 使用 gmake 进行编译
+          gmake package
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bootstrap_App
+          path: packages/*.ipa # 上传编译好的 ipa 文件
